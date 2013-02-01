@@ -65,7 +65,7 @@ class MJPEGClient(Protocol):
             header = data_sp[0].splitlines()
             # Parse header
             for line in header:
-                if line.endswith('200 OK'): # Connection went fine
+                if line.upper().endswith('200 OK'): # Connection went fine
                     self.isConnected = True
                     if debug: print 'Connected'
                 self.checkForBoundary(line)
@@ -73,15 +73,17 @@ class MJPEGClient(Protocol):
             if len(data_sp) == 2:
                 self.findJPEG(data_sp[1])
         else:
-            # If connection is alredy made find a JPEG right away
+            # If connection is already made find a JPEG right away
             self.findJPEG(data)
-    
+
     def checkForBoundary(self, line):
       if line.startswith('Content-Type: multipart'): # Got multipart
           r = re.search(r'boundary="?(.*)"?', line)
           self.boundary = r.group(1) # Extract boundary
+          if not self.boundary.startswith('--'):
+              self.boundary = '--' + self.boundary
           if debug: print 'Got boundary:', self.boundary
-
+    
     def findJPEG(self, data):
         hasMoreThanHeader = False
         # If we know next image size, than image header is already parsed
@@ -89,7 +91,7 @@ class MJPEGClient(Protocol):
             # Otherwise it should be a header first
             for line in data.splitlines():
                 if not len(self.boundary): self.checkForBoundary(line)
-                if line == '--'+self.boundary:
+                if line == self.boundary:
                     self.isHeader = True
                     if debug: print 'Got frame header'
                 elif line == '':
@@ -120,7 +122,7 @@ class MJPEGClient(Protocol):
             if data[remains:]:
                 self.findJPEG(data[remains:])
         if hasMoreThanHeader:
-            data_sp = data.split('\r\n\r\n', 1)
+            data_sp = data.strip().split('\r\n\r\n', 1)
             # If there is something after a header in a buffer
             if len(data_sp) == 2:
                 self.findJPEG(data_sp[1])
