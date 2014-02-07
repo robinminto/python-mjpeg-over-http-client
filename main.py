@@ -39,6 +39,7 @@ def main():
     parser.add_argument('--login', help='Username for authentication (optional)')
     parser.add_argument('--password', help='Password for authentication (optional)')
     parser.add_argument('--filename', default='frame.jpg', help='A file name to save frames (default: frame.jpg)')
+    parser.add_argument('--boundary', help='Override the detected MJPEG boundary (optional)')
     args = parser.parse_args()
     # Define connection parameters, login and password are optional.
     config.update(vars(args))

@@ -45,6 +45,8 @@ class MJPEGClient(Protocol):
             authstring = 'Authorization: Basic ' + b64encode(self.config['login']+':'+self.config['password']) + '\r\n'
         else:
             authstring = ''
+        if self.config['boundary']:
+            self.boundary = self.config['boundary']
         # Form proper HTTP request with header
         to_send = 'GET ' + self.config['request'] + ' HTTP/1.0\r\n' + \
             authstring + \
@@ -68,7 +70,8 @@ class MJPEGClient(Protocol):
                 if line.upper().endswith('200 OK'): # Connection went fine
                     self.isConnected = True
                     if debug: print 'Connected'
-                self.checkForBoundary(line)
+                if not len(self.boundary):
+                    self.checkForBoundary(line)
             # If we got more data, find a JPEG there
             if len(data_sp) == 2:
                 self.findJPEG(data_sp[1])
@@ -79,7 +82,7 @@ class MJPEGClient(Protocol):
     def checkForBoundary(self, line):
       if line.startswith('Content-Type: multipart'): # Got multipart
           r = re.search(r'boundary="?(.*)"?', line)
-          self.boundary = r.group(1) # Extract boundary
+          self.boundary = r.group(1).replace('"','') # Extract boundary
           if not self.boundary.startswith('--'):
               self.boundary = '--' + self.boundary
           if debug: print 'Got boundary:', self.boundary
