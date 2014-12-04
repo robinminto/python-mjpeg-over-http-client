@@ -41,11 +41,11 @@ class MJPEGClient(Protocol):
 
     def connectionMade(self):
         # Implement basic authorization
-        if self.config['login']:
+        if 'login' in self.config:
             authstring = 'Authorization: Basic ' + b64encode(self.config['login']+':'+self.config['password']) + '\r\n'
         else:
             authstring = ''
-        if self.config['boundary']:
+        if 'boundary' in self.config:
             self.boundary = self.config['boundary']
         # Form proper HTTP request with header
         to_send = 'GET ' + self.config['request'] + ' HTTP/1.0\r\n' + \
